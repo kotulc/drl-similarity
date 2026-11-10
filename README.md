@@ -221,8 +221,11 @@ The dashboard is planned as six focused views:
    selection, evaluation return curves, and data-quality warnings.
 2. **Scenario explorer:** replay clips and inspect labels, clip sources, rewards,
    actions, terminal events, and frame metadata.
-3. **Within-checkpoint consistency:** distributions, confidence intervals,
-   similarity matrices, centroid dispersion, and temporal lag curves.
+3. **Similarity matrix explorer:** a 3×3 case matrix and a drill-down 3×3
+   frame-pair matrix for the selected cases. Every cell shows its paired frames,
+   latent signatures, cosine, Pearson correlation, CKA, and normalized
+   Euclidean distance, with distributions and confidence intervals available
+   as secondary views.
 4. **Scenario separation:** within/between gaps, silhouette scores,
    nearest-centroid results, PCA, and optional UMAP.
 5. **Cross-checkpoint geometry:** layer-by-layer CKA, RSA, SVCCA, and
@@ -235,12 +238,13 @@ aggregate displays its sample count and confidence interval where applicable.
 The implementation plan specifies the controls, charts, interactions, cache
 rules, empty/error states, and data contract for every page.
 
-![Dashboard overview mockup](docs/dashboard-mockup.svg)
-
-The mockup shows the Overview page at desktop width; its values are
-illustrative, not study results. The implementation uses Streamlit for the
-Python-native application shell and Plotly for interactive,
-publication-quality charts. See the
+The primary interaction is matrix-first rather than KPI-first: select a model
+checkpoint, layer, metric, row-axis case, and column-axis case; then inspect the
+nine comparisons formed by three frames from each selected case. Clicking a
+case-matrix cell updates both axis selectors, while each selector can also be
+changed independently and the axes can be swapped. The
+implementation uses Streamlit for the Python-native application shell and
+Plotly for interactive, publication-quality charts. See the
 [dashboard implementation specification](docs/implementation-plan.md#10-dashboard-implementation)
 for package choices and component-level details.
 

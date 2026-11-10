@@ -664,11 +664,14 @@ kind: dashboard
 id: default-dashboard-v1
 
 title: Frogger representation study
-default_page: overview
+default_page: similarity_matrix
 default_filters:
   checkpoint: strong
   layer: policy_features
-  scenario: all
+  row_scenario: danger
+  column_scenario: danger
+  frames_per_case: 3
+  primary_metric: cosine
   pair_set: cross_clip_aligned_step
 theme:
   capability_order: [weak, medium, strong]
@@ -903,9 +906,11 @@ writes into an experiment directory. `drl-sim dashboard` resolves the study,
 validates result manifests, sets the config path in the process environment,
 and launches Streamlit.
 
-The visual target is captured in
-[the dashboard overview mockup](dashboard-mockup.svg). It is a layout contract,
-not fabricated study output; displayed numbers are illustrative.
+The visual target is matrix-first. The default screen is not a generic KPI
+overview: it is an interactive case-to-case matrix that drills into a 3×3
+frame-pair matrix. A live Cursor Canvas prototype accompanies this design; its
+values are illustrative, while the production Streamlit implementation reads
+the study artifacts defined here.
 
 ### Visualization framework and packages
 
@@ -973,7 +978,8 @@ Streamlit, it is actively maintained, and it has an automated fallback.
   valid filter options.
 - `dashboard/charts.py`: pure functions returning Plotly figures.
 - `dashboard/components.py`: reusable metric cards, warnings, provenance
-  expander, filter controls, clip player, and empty states.
+  expander, filter controls, case-matrix cell, frame-pair cell, metric bundle,
+  latent-signature diagram, clip player, and empty states.
 - `dashboard/pages/*.py`: page composition only; no direct file reads.
 
 `data.py` returns immutable data bundles:
@@ -1017,6 +1023,16 @@ saved defaults fall back to the first valid option and generate a warning.
 Selections persist in `st.session_state`; do not require URL routing in the
 MVP.
 
+For the matrix page, `dashboard/state.py` defines these keys explicitly:
+`row_scenario`, `column_scenario`, `row_frame`, and `column_frame`.
+`set_case_pair(row, column)` updates both axes after a case-cell click;
+`set_row_scenario` and `set_column_scenario` update one axis only and reset the
+frame selection; `swap_case_axes` exchanges scenarios and frame indices.
+Callbacks validate values against the study's configured labels before writing
+session state. Matrix rendering reads this state once per Streamlit rerun so
+selectors, highlighted cells, detail inspector, and download filters cannot
+disagree.
+
 Use fixed colors throughout:
 
 - capability colors are keyed by `weak`, `medium`, and `strong`;
@@ -1024,36 +1040,80 @@ Use fixed colors throughout:
 - missing/invalid values use neutral gray; and
 - color assignment never depends on current filtering order.
 
-### Page 1 — Overview
+### Page 1 — Similarity matrix explorer
 
-Purpose: establish that the compared checkpoints differ in capability and that
-the study artifacts are valid.
+Purpose: make the actual representation comparison the primary dashboard
+experience. The page tests H1, H2, and H3 without forcing the user through an
+overview first.
 
-Top row metric cards:
+Top control bar:
 
-- number of training seeds;
-- algorithm and policy;
-- environment ID and observation fingerprint prefix;
-- clips per scenario;
-- selected layers; and
-- latest artifact generation timestamp.
+- selected model checkpoint (`weak`, `medium`, or `strong`);
+- representation layer;
+- row-axis case selector populated from configured scenario labels;
+- column-axis case selector populated independently from the same labels;
+- pair-set/aggregation definition;
+- emphasized metric;
+- fixed frames-per-case selector, defaulting to and initially capped at three;
+- latent-signature visibility toggle; and
+- swap-axes and reset-to-YAML-defaults actions.
 
-Main charts and interactions:
+Axis state is first-class dashboard state. The row and column selectors may
+contain the same case for within-case consistency or different cases for
+cross-case separation. Changing either selector retains the other selector,
+resets the selected frame pair to the configured center/default frame, and
+refreshes the frame matrix. `Swap axes` exchanges both case selections and
+transposes the selected frame coordinates.
 
-1. Evaluation-return line chart: x is training step, y is mean selection return,
-   shaded 95% episode interval, one line per seed, and vertical markers for
-   weak/medium/strong checkpoints. Hover includes checkpoint ID, episode count,
-   mean, standard deviation, and config hash.
-2. Final-performance point/interval chart: selected capabilities on x, final
-   return on y, individual episode points optionally visible.
-3. Checkpoint-selection explanation: a compact record of each rule, selected
-   step, selection score, and minimum-improvement check.
-4. Study flow status: configuration → runs → scenarios → activations → metrics,
-   with each stage linked to provenance details.
-5. Data-quality panel: seed count warning, class balance, missing values,
-   checksum status, clip overlap checks, and any metric warnings.
+The first visualization is a **3×3 case-to-case matrix**. Rows and columns are
+baseline, danger, and goal. Every one of its nine cells contains:
 
-The page must visibly warn that a one-seed study is exploratory.
+1. a representative frame ribbon or contact-sheet thumbnail;
+2. the semantic scope (`within case` on the diagonal, `across cases`
+   off-diagonal);
+3. cosine similarity;
+4. Pearson correlation;
+5. linear CKA;
+6. normalized Euclidean distance;
+7. a compact visual encoding for the currently emphasized metric; and
+8. bootstrap uncertainty on hover or in an expandable detail.
+
+Clicking a case cell synchronizes the row/column selectors with that cell and
+opens the second visualization: a **3×3 frame-pair matrix**. Its rows are
+frames 1–3 from the selected row case; its columns are frames 1–3 from the
+selected column case. A subsequent independent selector change updates only
+that axis.
+Every frame-pair cell contains:
+
+1. both source frame thumbnails;
+2. both latent-vector signatures or a compact activation diagram;
+3. cosine, Pearson, CKA, and normalized Euclidean values;
+4. visual emphasis for the selected primary metric;
+5. relative frame offsets and clip IDs in hover data; and
+6. a click target that updates a persistent detail inspector.
+
+The detail inspector shows the selected pair at larger size, all metric values
+and intervals, source clip metadata, latent layer and pooling, independent
+sample count, input-space visual change, and whether the comparison is
+within-case or cross-case. It includes a direct action to open the full clip in
+the Scenario Explorer.
+
+Below the matrices, secondary tabs provide:
+
+- clip-level violin/box distributions with raw clip points;
+- temporal-lag curves for the selected case;
+- a deterministic all-sample heatmap with scenario boundaries; and
+- latent change versus input pixel change.
+
+Matrix cells are ordinary Streamlit containers with Plotly microfigures or
+HTML-free Streamlit primitives. The full frame matrix may use a single Plotly
+subplot figure when linked hover is more important than independent cell
+controls. Choose one implementation after a prototype benchmark, but preserve
+keyboard focus, tooltips, and a tabular accessible fallback.
+
+Every metric states its direction, normalization, pair definition, independent
+clip count, and bootstrap seed. A one-seed warning remains visible without
+displacing the matrix.
 
 ### Page 2 — Scenario explorer
 
@@ -1080,26 +1140,25 @@ Display:
 
 The player reads frozen observations; it does not replay the emulator.
 
-### Page 3 — Within-scenario consistency
+### Page 3 — Training and quality overview
 
-Purpose: test H1 and H3.
+Purpose: establish that compared checkpoints differ in capability and that the
+artifacts behind the matrix are valid.
 
 Views:
 
-1. Capability comparison: point and 95% clip-bootstrap interval for cosine,
-   correlation, normalized Euclidean, or centroid dispersion. Facet by
-   scenario; optionally facet or select layer.
-2. Distribution view: violin/box plot of clip-level values, with raw clip
-   points keyed by clip ID. Do not plot millions of frame-pair points.
-3. Similarity heatmap: a deterministic, capped sample of clip centroids or
-   aligned frames, with scenario boundary annotations.
-4. Temporal-lag chart: lag on x and temporal cosine on y, one line per
-   capability, interval by clips.
-5. Visual-change control: latent change versus input pixel change scatter and
-   binned trend. Hover identifies clip and step.
+1. Evaluation-return line chart with selection interval, one line per seed, and
+   weak/medium/strong checkpoint markers.
+2. Final-performance point/interval chart with individual episode points.
+3. Checkpoint-selection rules and evidence.
+4. Study flow status from configuration through metric artifacts.
+5. Data-quality checks for class balance, checksums, clip overlap, missing
+   values, and seed separation.
+6. Compact cards for algorithm, policy, environment fingerprint, clips per
+   scenario, selected layers, and generation timestamp.
 
-Every chart states whether higher or lower means “more consistent,” pair-set
-definition, normalization, number of independent clips, and bootstrap seed.
+The page visibly warns that a one-seed study is exploratory and links directly
+back to the matrix explorer.
 
 ### Page 4 — Scenario separation
 
@@ -1549,9 +1608,9 @@ for the current group pass.
 Implement the module and page responsibilities from section 10 in this order:
 
 1. typed readers and fixture artifacts;
-2. overview page;
+2. matrix cell components and matrix explorer;
 3. scenario player;
-4. consistency page;
+4. training/quality overview;
 5. separation page;
 6. geometry page;
 7. provenance/export page; and
@@ -1559,7 +1618,10 @@ Implement the module and page responsibilities from section 10 in this order:
 
 Create one small fixture study under `tests/fixtures/study/` containing all
 schemas but no proprietary ROM or checkpoint. Dashboard tests use only this
-fixture.
+fixture. Add state tests proving that row and column cases can be changed
+independently, case-cell clicks synchronize both selectors, swapping axes
+transposes the selected frame pair, and invalid labels fall back with a visible
+warning.
 
 ### 12.11 CLI and orchestration
 
@@ -1614,6 +1676,9 @@ cosine need not be.
   expected filtered frames.
 - Streamlit app smoke tests open all six pages, change global filters, and
   exercise empty/error states.
+- Matrix interaction tests independently change each case axis, click a
+  case-pair cell, swap axes, and verify the highlighted 3×3 frame matrix and
+  detail inspector stay synchronized.
 
 Do not put a multi-million-step Frogger run in CI. Full experiment manifests
 record the commit and test status used to generate them.
