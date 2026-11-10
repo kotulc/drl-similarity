@@ -1,0 +1,321 @@
+{
+  "schema_version": 1,
+  "stage": "extract",
+  "artifact_id": "activations",
+  "config_hash": "ddddd5b7952318adc5dbb0b714c005166b8379f696d6c57bf5d7fe49ec03bd22",
+  "created_at": "2026-11-10T14:04:27.825833+00:00",
+  "git_commit": "f83dd568f1f5e7b2f5e19803ffda24fa96a571da",
+  "package_versions": {
+    "numpy": "1.26.4",
+    "pandas": "2.2.3"
+  },
+  "inputs": [
+    {
+      "path": "../../../scenarios/fixture-clips.yaml",
+      "sha256": "0e244bf841f3f4bdd39253a4a5843009ea7111c86702eb24cae0af05a0a4014c",
+      "role": "scenario_manifest"
+    },
+    {
+      "path": "../../../scenarios/fixture-clips/observations.npz",
+      "sha256": "4da7f33e8a66fcb4a9a5afcf3f4d7ae70429120387867e5d44ed697fe867ad38",
+      "role": "observations"
+    },
+    {
+      "path": "../../../fixture-dqn-run/resolved-config.yaml",
+      "sha256": "757aad35c208e76f1827fe179fe8d5e56020bcd90d71c5dfad6ea97e3b62d25a",
+      "role": "run_config"
+    },
+    {
+      "path": "../../../fixture-dqn-run/selected-checkpoints.yaml",
+      "sha256": "f59c1d6577a08c0f33ac312c8c6f180cd24f417c0b871300adff9ecc0e9f24ee",
+      "role": "checkpoint_selection"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "clips.parquet",
+      "sha256": "82465dd00848d005dc5cd8da7e6dd4eb122bf1aa51e69664d0432e51916c6ca9",
+      "role": "clips",
+      "schema_version": 1,
+      "bytes": 5851
+    },
+    {
+      "path": "resolved-config.yaml",
+      "sha256": "1ea887e4a9dad86873826ff8242a6722ac33e78f9ffcf7229952ba1dc7674535",
+      "role": "resolved_config",
+      "schema_version": 1,
+      "bytes": 3318
+    },
+    {
+      "path": "fixture-dqn-run/weak/conv3.npz",
+      "sha256": "743beb9014cbabafb8fb865bd047c7434027ec0f0aae63546d3cc5ef014f7299",
+      "role": "activations",
+      "schema_version": 1,
+      "bytes": 3484
+    },
+    {
+      "path": "fixture-dqn-run/weak/policy_features.npz",
+      "sha256": "8ddb2ee351c3bbe63ffa95be3e7497229d829702ee8fdecf231e0864296043f0",
+      "role": "activations",
+      "schema_version": 1,
+      "bytes": 6638
+    },
+    {
+      "path": "fixture-dqn-run/weak/q_values.npz",
+      "sha256": "9e08ec40ffe035938fe70c75fbe0d19235eb29cb8501b1039384f1c1533a42ad",
+      "role": "activations",
+      "schema_version": 1,
+      "bytes": 1810
+    },
+    {
+      "path": "fixture-dqn-run/medium/conv3.npz",
+      "sha256": "7e08bfe8517f016ca1231d705461011cf2693db78fcbe212229e4240d0651924",
+      "role": "activations",
+      "schema_version": 1,
+      "bytes": 3346
+    },
+    {
+      "path": "fixture-dqn-run/medium/policy_features.npz",
+      "sha256": "484ac73c7db899fce45e5cc192b6534d266e9224c23b0689623873c4a8f2eb56",
+      "role": "activations",
+      "schema_version": 1,
+      "bytes": 6545
+    },
+    {
+      "path": "fixture-dqn-run/medium/q_values.npz",
+      "sha256": "c894b1e8a8ab37070de99ed467e7b0f7c8adb4a3db0f07933722263a6a56f27c",
+      "role": "activations",
+      "schema_version": 1,
+      "bytes": 1804
+    },
+    {
+      "path": "fixture-dqn-run/strong/conv3.npz",
+      "sha256": "cc1484ba913583d552c0fdad0c2c8576ae6c86051aa213026dee7f473e4dfcdf",
+      "role": "activations",
+      "schema_version": 1,
+      "bytes": 3240
+    },
+    {
+      "path": "fixture-dqn-run/strong/policy_features.npz",
+      "sha256": "9911661547828943fd65212cee163348b43ced0b3b942cca651bbb1f707b4f0d",
+      "role": "activations",
+      "schema_version": 1,
+      "bytes": 6092
+    },
+    {
+      "path": "fixture-dqn-run/strong/q_values.npz",
+      "sha256": "6a10d6d829974fbf59674fac63071aee720b0d89d25fab91bc356ae9ea1fe5a6",
+      "role": "activations",
+      "schema_version": 1,
+      "bytes": 1817
+    }
+  ],
+  "metadata": {
+    "schema": "activations/v1",
+    "study_id": "fixture-study-v1",
+    "stage_config_hash": "6d38d73bcf817ea9ff6373608f6af530896acb5409cafae399172fe097c47632",
+    "clip_steps": 6,
+    "n_clips": 12,
+    "clip_ids": [
+      "baseline-0001",
+      "baseline-0002",
+      "baseline-0003",
+      "baseline-0004",
+      "danger-0001",
+      "danger-0002",
+      "danger-0003",
+      "danger-0004",
+      "goal-0001",
+      "goal-0002",
+      "goal-0003",
+      "goal-0004"
+    ],
+    "dtype": "float32",
+    "batch_size": 16,
+    "entries": [
+      {
+        "run_id": "fixture-dqn-run",
+        "algorithm_id": "sb3-dqn-nature-cnn-demo-v1",
+        "adapter_id": "sb3.dqn",
+        "training_seed": 1,
+        "capability": "weak",
+        "checkpoint_id": "checkpoint_10000",
+        "training_step": 10000,
+        "checkpoint_sha256": "synthetic",
+        "layer": "conv3",
+        "source_layer": "conv3",
+        "pooling": "global_average",
+        "original_shape": [
+          16,
+          7,
+          7
+        ],
+        "feature_dim": 16,
+        "dtype": "float32",
+        "path": "fixture-dqn-run/weak/conv3.npz"
+      },
+      {
+        "run_id": "fixture-dqn-run",
+        "algorithm_id": "sb3-dqn-nature-cnn-demo-v1",
+        "adapter_id": "sb3.dqn",
+        "training_seed": 1,
+        "capability": "weak",
+        "checkpoint_id": "checkpoint_10000",
+        "training_step": 10000,
+        "checkpoint_sha256": "synthetic",
+        "layer": "policy_features",
+        "source_layer": "policy_features",
+        "pooling": "none",
+        "original_shape": [
+          32
+        ],
+        "feature_dim": 32,
+        "dtype": "float32",
+        "path": "fixture-dqn-run/weak/policy_features.npz"
+      },
+      {
+        "run_id": "fixture-dqn-run",
+        "algorithm_id": "sb3-dqn-nature-cnn-demo-v1",
+        "adapter_id": "sb3.dqn",
+        "training_seed": 1,
+        "capability": "weak",
+        "checkpoint_id": "checkpoint_10000",
+        "training_step": 10000,
+        "checkpoint_sha256": "synthetic",
+        "layer": "q_values",
+        "source_layer": "q_values",
+        "pooling": "none",
+        "original_shape": [
+          5
+        ],
+        "feature_dim": 5,
+        "dtype": "float32",
+        "path": "fixture-dqn-run/weak/q_values.npz"
+      },
+      {
+        "run_id": "fixture-dqn-run",
+        "algorithm_id": "sb3-dqn-nature-cnn-demo-v1",
+        "adapter_id": "sb3.dqn",
+        "training_seed": 1,
+        "capability": "medium",
+        "checkpoint_id": "checkpoint_30000",
+        "training_step": 30000,
+        "checkpoint_sha256": "synthetic",
+        "layer": "conv3",
+        "source_layer": "conv3",
+        "pooling": "global_average",
+        "original_shape": [
+          16,
+          7,
+          7
+        ],
+        "feature_dim": 16,
+        "dtype": "float32",
+        "path": "fixture-dqn-run/medium/conv3.npz"
+      },
+      {
+        "run_id": "fixture-dqn-run",
+        "algorithm_id": "sb3-dqn-nature-cnn-demo-v1",
+        "adapter_id": "sb3.dqn",
+        "training_seed": 1,
+        "capability": "medium",
+        "checkpoint_id": "checkpoint_30000",
+        "training_step": 30000,
+        "checkpoint_sha256": "synthetic",
+        "layer": "policy_features",
+        "source_layer": "policy_features",
+        "pooling": "none",
+        "original_shape": [
+          32
+        ],
+        "feature_dim": 32,
+        "dtype": "float32",
+        "path": "fixture-dqn-run/medium/policy_features.npz"
+      },
+      {
+        "run_id": "fixture-dqn-run",
+        "algorithm_id": "sb3-dqn-nature-cnn-demo-v1",
+        "adapter_id": "sb3.dqn",
+        "training_seed": 1,
+        "capability": "medium",
+        "checkpoint_id": "checkpoint_30000",
+        "training_step": 30000,
+        "checkpoint_sha256": "synthetic",
+        "layer": "q_values",
+        "source_layer": "q_values",
+        "pooling": "none",
+        "original_shape": [
+          5
+        ],
+        "feature_dim": 5,
+        "dtype": "float32",
+        "path": "fixture-dqn-run/medium/q_values.npz"
+      },
+      {
+        "run_id": "fixture-dqn-run",
+        "algorithm_id": "sb3-dqn-nature-cnn-demo-v1",
+        "adapter_id": "sb3.dqn",
+        "training_seed": 1,
+        "capability": "strong",
+        "checkpoint_id": "checkpoint_80000",
+        "training_step": 80000,
+        "checkpoint_sha256": "synthetic",
+        "layer": "conv3",
+        "source_layer": "conv3",
+        "pooling": "global_average",
+        "original_shape": [
+          16,
+          7,
+          7
+        ],
+        "feature_dim": 16,
+        "dtype": "float32",
+        "path": "fixture-dqn-run/strong/conv3.npz"
+      },
+      {
+        "run_id": "fixture-dqn-run",
+        "algorithm_id": "sb3-dqn-nature-cnn-demo-v1",
+        "adapter_id": "sb3.dqn",
+        "training_seed": 1,
+        "capability": "strong",
+        "checkpoint_id": "checkpoint_80000",
+        "training_step": 80000,
+        "checkpoint_sha256": "synthetic",
+        "layer": "policy_features",
+        "source_layer": "policy_features",
+        "pooling": "none",
+        "original_shape": [
+          32
+        ],
+        "feature_dim": 32,
+        "dtype": "float32",
+        "path": "fixture-dqn-run/strong/policy_features.npz"
+      },
+      {
+        "run_id": "fixture-dqn-run",
+        "algorithm_id": "sb3-dqn-nature-cnn-demo-v1",
+        "adapter_id": "sb3.dqn",
+        "training_seed": 1,
+        "capability": "strong",
+        "checkpoint_id": "checkpoint_80000",
+        "training_step": 80000,
+        "checkpoint_sha256": "synthetic",
+        "layer": "q_values",
+        "source_layer": "q_values",
+        "pooling": "none",
+        "original_shape": [
+          5
+        ],
+        "feature_dim": 5,
+        "dtype": "float32",
+        "path": "fixture-dqn-run/strong/q_values.npz"
+      }
+    ],
+    "synthetic": true,
+    "generator": "scripts/generate_fixture_study.py",
+    "device": "none",
+    "environment_fingerprint": "ae2af40eb7b7271a5f7ae5b3334c72660be0513e1ca524a988c693072cb48f43",
+    "observations_sha256": "4da7f33e8a66fcb4a9a5afcf3f4d7ae70429120387867e5d44ed697fe867ad38",
+    "recurrent": false
+  }
+}

@@ -1,0 +1,44 @@
+# CPU demo: a short real training run that exercises the whole pipeline.
+schema_version: 1
+kind: experiment
+id: frogger-dqn-demo
+
+environment:
+  ref: ../environments/atari-frogger.yaml
+algorithm:
+  ref: ../algorithms/dqn-nature-cnn-demo.yaml
+
+seed: 1
+device: cpu
+training:
+  total_timesteps: 120000
+  log_interval_steps: 10000
+  checkpoint_interval_steps: 10000
+  progress_bar: false
+evaluation:
+  deterministic_actions: true
+  max_agent_steps: 1000
+  selection:
+    seeds: [1001, 1002, 1003]
+    episodes_per_seed: 1
+    interval_steps: 10000
+  final:
+    seeds: [2001, 2002, 2003]
+    episodes_per_seed: 1
+checkpoint_selection:
+  weak:
+    rule: earliest_complete_after_learning_starts
+  medium:
+    rule: nearest_performance_midpoint
+    smoothing_window: 3
+  strong:
+    rule: highest_mean_selection_return
+  minimum_strong_improvement: 2.0
+artifacts:
+  root: ../../runs
+  collision: error
+reproducibility:
+  torch_deterministic: true
+  cudnn_benchmark: false
+  capture_packages: true
+  capture_git: true

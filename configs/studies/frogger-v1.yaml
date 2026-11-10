@@ -1,0 +1,103 @@
+schema_version: 1
+kind: study
+id: frogger-representation-v1
+
+experiments:
+  - run_dir: ../../runs/frogger-dqn-seed-1
+    checkpoint_set: selected
+
+scenarios:
+  manifest: ../../data/scenarios/frogger-v1.yaml
+  labels: [baseline, danger, goal]
+  minimum_clips_per_label: 20
+  clip_steps: 32
+  burn_in_steps: 16
+  collection:
+    experiment_index: 0
+    checkpoint: strong
+    seeds: [3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008, 3009, 3010]
+    episodes_per_seed: 2
+    max_agent_steps: 27000
+    retain_source_rgb: true
+    write_video_previews: true
+    candidate_windows:
+      baseline:
+        anchor: life_start
+        offset_steps: 0
+      danger:
+        anchor: life_lost
+        offset_steps: -31
+      goal:
+        anchor: positive_goal_event
+        offset_steps: -31
+  review:
+    require_approved: true
+    minimum_reviewers: 1
+  split:
+    unit: clip
+    train_fraction: 0.7
+    seed: 3501
+
+extraction:
+  batch_size: 64
+  device: auto
+  dtype: float32
+  layers:
+    - name: conv1
+      source: conv1
+      pooling: global_average
+    - name: conv2
+      source: conv2
+      pooling: global_average
+    - name: conv3
+      source: conv3
+      pooling: global_average
+    - name: conv_flat
+      source: conv_flat
+      pooling: none
+    - name: policy_features
+      source: policy_features
+      pooling: none
+    - name: q_values
+      source: q_values
+      pooling: none
+
+analysis:
+  pair_sets:
+    - cross_clip_all
+    - cross_clip_aligned_step
+    - clip_centroids
+  metrics:
+    - id: cosine
+    - id: correlation
+    - id: normalized_euclidean
+      kwargs: {standardize_on: train_clips}
+    - id: centroid_dispersion
+    - id: temporal_cosine
+      kwargs: {lags: [1, 2, 4, 8]}
+    - id: within_between_gap
+    - id: silhouette
+    - id: nearest_centroid_accuracy
+    - id: linear_cka
+    - id: rsa_spearman
+      kwargs: {first_order_distance: correlation}
+    - id: svcca
+      kwargs: {variance_retained: 0.99}
+    - id: orthogonal_procrustes
+  bootstrap:
+    unit: clip
+    replicates: 2000
+    confidence_level: 0.95
+    seed: 4001
+  embeddings:
+    - id: pca
+      kwargs: {components: 2}
+    - id: umap
+      enabled: false
+      kwargs: {components: 2, neighbors: 15, min_dist: 0.1, seed: 5001}
+
+dashboard:
+  ref: ../dashboards/default.yaml
+artifacts:
+  root: ../../artifacts
+  collision: error

@@ -1,0 +1,35 @@
+schema_version: 1
+rule_version: v1
+config_hash: baf4c4503e12bcdf92cf8f3ae23a9e8e031c1f1c95d3f750aa3122cdeb32cb4f
+selected:
+  weak:
+    checkpoint_id: checkpoint_10000
+    training_step: 10000
+    score: 23.061225835022857
+    uncertainty: 4.69755913774919
+    smoothed_score: 30.01016645191281
+    n_episodes: 3
+  medium:
+    checkpoint_id: checkpoint_30000
+    training_step: 30000
+    score: 44.740722926003365
+    uncertainty: 3.1598956580656847
+    smoothed_score: 43.795061566195756
+    n_episodes: 3
+  strong:
+    checkpoint_id: checkpoint_80000
+    training_step: 80000
+    score: 64.7160556387418
+    uncertainty: 1.0918958102527614
+    smoothed_score: 62.24573432987481
+    n_episodes: 3
+evidence:
+  rules:
+    weak: earliest_complete_after_learning_starts
+    medium: nearest_performance_midpoint
+    strong: highest_mean_selection_return
+  n_checkpoints: 8
+  improvement: 41.654829803718954
+  minimum_strong_improvement: 2.0
+  target_midpoint: 43.88864073688233
+  smoothing_window: 3

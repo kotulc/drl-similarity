@@ -1,0 +1,113 @@
+algorithm:
+  adapter: sb3.dqn
+  capabilities:
+    action_spaces:
+    - discrete
+    activation_layers:
+    - conv1
+    - conv2
+    - conv3
+    - conv_flat
+    - policy_features
+    - q_values
+    recurrent: false
+  id: sb3-dqn-nature-cnn-demo-v1
+  kind: algorithm
+  model_kwargs:
+    batch_size: 32
+    buffer_size: 20000
+    exploration_final_eps: 0.05
+    exploration_fraction: 0.3
+    exploration_initial_eps: 1.0
+    gamma: 0.99
+    gradient_steps: 1
+    learning_rate: 0.0001
+    learning_starts: 5000
+    target_update_interval: 1000
+    tau: 1.0
+    train_freq: 4
+  policy: CnnPolicy
+  policy_kwargs:
+    features_extractor: nature_cnn
+    normalize_images: true
+  schema_version: 1
+artifacts:
+  collision: error
+  root: tests/fixtures/study
+checkpoint_selection:
+  medium:
+    rule: nearest_performance_midpoint
+    smoothing_window: 3
+  minimum_strong_improvement: 2.0
+  strong:
+    rule: highest_mean_selection_return
+    smoothing_window: 1
+  weak:
+    rule: earliest_complete_after_learning_starts
+    smoothing_window: 1
+device: cpu
+environment:
+  backend: gymnasium
+  env_id: ALE/Frogger-v5
+  expected:
+    action_space: discrete
+    effective_frame_skip: 4
+    observation_dtype: uint8
+    observation_shape:
+    - 4
+    - 84
+    - 84
+  id: atari-frogger-v1
+  kind: environment
+  make_kwargs:
+    frameskip: 1
+    full_action_space: false
+    obs_type: rgb
+    repeat_action_probability: 0.0
+  registration_modules:
+  - ale_py
+  schema_version: 1
+  wrappers:
+  - id: record_episode_statistics
+    kwargs: {}
+  - id: sb3_atari
+    kwargs:
+      clip_reward: false
+      frame_skip: 4
+      noop_max: 30
+      screen_size: 84
+      terminal_on_life_loss: false
+  - id: frame_stack
+    kwargs:
+      num_stack: 4
+evaluation:
+  deterministic_actions: true
+  final:
+    episodes_per_seed: 1
+    interval_steps: null
+    seeds:
+    - 2001
+    - 2002
+    - 2003
+  max_agent_steps: 1000
+  selection:
+    episodes_per_seed: 1
+    interval_steps: 10000
+    seeds:
+    - 1001
+    - 1002
+    - 1003
+id: fixture-dqn-run
+kind: experiment
+reproducibility:
+  capture_git: true
+  capture_packages: true
+  cudnn_benchmark: false
+  torch_deterministic: true
+schema_version: 1
+seed: 1
+training:
+  checkpoint_interval_steps: 10000
+  log_interval_steps: 10000
+  progress_bar: false
+  total_timesteps: 80000

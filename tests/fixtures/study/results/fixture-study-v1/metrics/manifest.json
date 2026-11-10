@@ -1,0 +1,539 @@
+{
+  "schema_version": 1,
+  "stage": "analyze",
+  "artifact_id": "metrics",
+  "config_hash": "ddddd5b7952318adc5dbb0b714c005166b8379f696d6c57bf5d7fe49ec03bd22",
+  "created_at": "2026-11-10T14:04:30.180703+00:00",
+  "git_commit": "f83dd568f1f5e7b2f5e19803ffda24fa96a571da",
+  "package_versions": {
+    "numpy": "1.26.4",
+    "pandas": "2.2.3",
+    "scipy": "1.14.1",
+    "sklearn": "1.5.2",
+    "pyarrow": "18.1.0"
+  },
+  "inputs": [
+    {
+      "path": "../activations/manifest.json",
+      "sha256": "643b2c5c59a530cf87999f69c78fd32b1bd526f168ddb474fd9a5799bb4a3a21",
+      "role": "activations_manifest"
+    },
+    {
+      "path": "../../../scenarios/fixture-clips.yaml",
+      "sha256": "0e244bf841f3f4bdd39253a4a5843009ea7111c86702eb24cae0af05a0a4014c",
+      "role": "scenario_manifest"
+    },
+    {
+      "path": "../../../scenarios/fixture-clips/observations.npz",
+      "sha256": "4da7f33e8a66fcb4a9a5afcf3f4d7ae70429120387867e5d44ed697fe867ad38",
+      "role": "observations"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "summaries.parquet",
+      "sha256": "81e74acff2aafd5b6175aceca2e5bd9c970ebc710ddb06f5c9832aaed87b503a",
+      "role": "summaries",
+      "schema_version": 1,
+      "bytes": 42476
+    },
+    {
+      "path": "cross_checkpoint.parquet",
+      "sha256": "6cd884a911215c95c85c5f95b3376ea90a94d2e9dedbee205e3ab72c5bc70838",
+      "role": "cross_checkpoint",
+      "schema_version": 1,
+      "bytes": 24316
+    },
+    {
+      "path": "frame_pairs.parquet",
+      "sha256": "955d1298bb688511aa281ba39ab5952009c49f23835ffda02438411a3cf07569",
+      "role": "frame_pairs",
+      "schema_version": 1,
+      "bytes": 187768
+    },
+    {
+      "path": "embeddings.parquet",
+      "sha256": "5c37fa3ffff3b52808ea24c04d921d36465c0eb894d8e5183cb15f36de3b9488",
+      "role": "embeddings",
+      "schema_version": 1,
+      "bytes": 23858
+    },
+    {
+      "path": "resolved-config.yaml",
+      "sha256": "1ea887e4a9dad86873826ff8242a6722ac33e78f9ffcf7229952ba1dc7674535",
+      "role": "resolved_config",
+      "schema_version": 1,
+      "bytes": 3318
+    }
+  ],
+  "metadata": {
+    "schema": "metrics/v1",
+    "study_id": "fixture-study-v1",
+    "stage_config_hash": "06a757a21ffd87d39640a9df8401a61b1676a7c3747568d9ba84bb530fdb3bac",
+    "activations_dir": "activations",
+    "activations_manifest_sha256": "643b2c5c59a530cf87999f69c78fd32b1bd526f168ddb474fd9a5799bb4a3a21",
+    "synthetic": true,
+    "labels": [
+      "baseline",
+      "danger",
+      "goal"
+    ],
+    "n_clips": 12,
+    "clip_steps": 6,
+    "clips_per_label": {
+      "baseline": 4,
+      "danger": 4,
+      "goal": 4
+    },
+    "pair_sets": [
+      "cross_clip_all",
+      "cross_clip_aligned_step",
+      "clip_centroids"
+    ],
+    "metrics": [
+      {
+        "id": "centroid_dispersion",
+        "kind": "distance",
+        "direction": "lower = more similar",
+        "range": [
+          0.0,
+          null
+        ],
+        "scopes": [
+          "within_scenario"
+        ],
+        "requires_alignment": false,
+        "preprocessing": "features z-scored on train clips; clip centroids; distance / sqrt(features)",
+        "supported_rank": 2,
+        "description": "Mean distance of clip centroids from their scenario centroid."
+      },
+      {
+        "id": "correlation",
+        "kind": "similarity",
+        "direction": "higher = more similar",
+        "range": [
+          -1.0,
+          1.0
+        ],
+        "scopes": [
+          "within_scenario",
+          "between_scenario"
+        ],
+        "requires_alignment": false,
+        "preprocessing": "each vector centered on its own mean (Pearson)",
+        "supported_rank": 2,
+        "description": "Pearson correlation between latent vectors after removing each vector's mean."
+      },
+      {
+        "id": "cosine",
+        "kind": "similarity",
+        "direction": "higher = more similar",
+        "range": [
+          -1.0,
+          1.0
+        ],
+        "scopes": [
+          "within_scenario",
+          "between_scenario"
+        ],
+        "requires_alignment": false,
+        "preprocessing": "raw vectors; zero vectors reported as NaN",
+        "supported_rank": 2,
+        "description": "Directional agreement between latent vectors of frames from different clips."
+      },
+      {
+        "id": "linear_cka",
+        "kind": "similarity",
+        "direction": "higher = more similar",
+        "range": [
+          0.0,
+          1.0
+        ],
+        "scopes": [
+          "cross_checkpoint",
+          "within_scenario",
+          "between_scenario"
+        ],
+        "requires_alignment": true,
+        "preprocessing": "columns centered over samples; Gram-matrix alignment",
+        "supported_rank": 2,
+        "description": "Similarity of sample geometry; invariant to rotation and isotropic scaling."
+      },
+      {
+        "id": "nearest_centroid_accuracy",
+        "kind": "score",
+        "direction": "higher = better separated",
+        "range": [
+          0.0,
+          1.0
+        ],
+        "scopes": [
+          "separation",
+          "confusion"
+        ],
+        "requires_alignment": false,
+        "preprocessing": "normalization and class centroids fitted on train clips only",
+        "supported_rank": 2,
+        "description": "Held-out scenario prediction from clip centroids with a nearest-centroid rule."
+      },
+      {
+        "id": "normalized_euclidean",
+        "kind": "distance",
+        "direction": "lower = more similar",
+        "range": [
+          0.0,
+          null
+        ],
+        "scopes": [
+          "within_scenario",
+          "between_scenario"
+        ],
+        "requires_alignment": false,
+        "preprocessing": "features z-scored on the declared clips; distance / sqrt(features)",
+        "supported_rank": 2,
+        "description": "Magnitude-sensitive distance after feature standardization."
+      },
+      {
+        "id": "orthogonal_procrustes",
+        "kind": "distance",
+        "direction": "lower = more similar",
+        "range": [
+          0.0,
+          1.0
+        ],
+        "scopes": [
+          "cross_checkpoint"
+        ],
+        "requires_alignment": true,
+        "preprocessing": "centered, unit Frobenius norm; residual after best orthogonal alignment",
+        "supported_rank": 2,
+        "description": "Normalized residual distance after optimal rotation; needs equal widths."
+      },
+      {
+        "id": "rsa_spearman",
+        "kind": "similarity",
+        "direction": "higher = more similar",
+        "range": [
+          -1.0,
+          1.0
+        ],
+        "scopes": [
+          "cross_checkpoint"
+        ],
+        "requires_alignment": true,
+        "preprocessing": "first-order RDM (configured distance); Spearman of upper triangles",
+        "supported_rank": 2,
+        "description": "Correlation between representational dissimilarity matrices."
+      },
+      {
+        "id": "silhouette",
+        "kind": "score",
+        "direction": "higher = better separated",
+        "range": [
+          -1.0,
+          1.0
+        ],
+        "scopes": [
+          "separation"
+        ],
+        "requires_alignment": false,
+        "preprocessing": "clip centroids of train-z-scored features; Euclidean",
+        "supported_rank": 2,
+        "description": "Scenario compactness relative to separation, computed on clip centroids."
+      },
+      {
+        "id": "svcca",
+        "kind": "similarity",
+        "direction": "higher = more similar",
+        "range": [
+          0.0,
+          1.0
+        ],
+        "scopes": [
+          "cross_checkpoint"
+        ],
+        "requires_alignment": true,
+        "preprocessing": "centered; SVD to configured retained variance; mean canonical correlation",
+        "supported_rank": 2,
+        "description": "Similarity between dominant representational subspaces."
+      },
+      {
+        "id": "temporal_cosine",
+        "kind": "similarity",
+        "direction": "higher = more similar",
+        "range": [
+          -1.0,
+          1.0
+        ],
+        "scopes": [
+          "temporal"
+        ],
+        "requires_alignment": false,
+        "preprocessing": "raw vectors at fixed lags within a clip; reported with input-pixel control",
+        "supported_rank": 3,
+        "description": "Cosine similarity between steps a fixed lag apart inside one clip."
+      },
+      {
+        "id": "within_between_gap",
+        "kind": "score",
+        "direction": "higher = better separated",
+        "range": [
+          -2.0,
+          2.0
+        ],
+        "scopes": [
+          "separation"
+        ],
+        "requires_alignment": false,
+        "preprocessing": "base similarity (default cosine) over matched pair definitions",
+        "supported_rank": 2,
+        "description": "Mean same-scenario similarity minus mean different-scenario similarity."
+      }
+    ],
+    "metric_kwargs": {
+      "cosine": {},
+      "correlation": {},
+      "normalized_euclidean": {
+        "standardize_on": "train_clips"
+      },
+      "centroid_dispersion": {},
+      "temporal_cosine": {
+        "lags": [
+          1,
+          2
+        ]
+      },
+      "within_between_gap": {},
+      "silhouette": {},
+      "nearest_centroid_accuracy": {},
+      "linear_cka": {},
+      "rsa_spearman": {
+        "first_order_distance": "correlation"
+      },
+      "svcca": {
+        "variance_retained": 0.99
+      },
+      "orthogonal_procrustes": {}
+    },
+    "bootstrap": {
+      "unit": "clip",
+      "stratified_by": "scenario",
+      "replicates": 20,
+      "confidence_level": 0.95,
+      "seed": 4001
+    },
+    "cross_checkpoint_samples": {
+      "linear_cka": "frame[4_of_6_steps_per_clip]",
+      "rsa_spearman": "frame[4_of_6_steps_per_clip]",
+      "svcca": "frame[4_of_6_steps_per_clip]",
+      "orthogonal_procrustes": "frame[4_of_6_steps_per_clip]"
+    },
+    "representative_frames": [
+      {
+        "scenario": "baseline",
+        "clip_id": "baseline-0001",
+        "step": 0,
+        "frame_rank": 0,
+        "offset_rank": 0
+      },
+      {
+        "scenario": "baseline",
+        "clip_id": "baseline-0001",
+        "step": 2,
+        "frame_rank": 0,
+        "offset_rank": 1
+      },
+      {
+        "scenario": "baseline",
+        "clip_id": "baseline-0001",
+        "step": 5,
+        "frame_rank": 0,
+        "offset_rank": 2
+      },
+      {
+        "scenario": "baseline",
+        "clip_id": "baseline-0002",
+        "step": 0,
+        "frame_rank": 1,
+        "offset_rank": 0
+      },
+      {
+        "scenario": "baseline",
+        "clip_id": "baseline-0002",
+        "step": 2,
+        "frame_rank": 1,
+        "offset_rank": 1
+      },
+      {
+        "scenario": "baseline",
+        "clip_id": "baseline-0002",
+        "step": 5,
+        "frame_rank": 1,
+        "offset_rank": 2
+      },
+      {
+        "scenario": "baseline",
+        "clip_id": "baseline-0003",
+        "step": 0,
+        "frame_rank": 2,
+        "offset_rank": 0
+      },
+      {
+        "scenario": "baseline",
+        "clip_id": "baseline-0003",
+        "step": 2,
+        "frame_rank": 2,
+        "offset_rank": 1
+      },
+      {
+        "scenario": "baseline",
+        "clip_id": "baseline-0003",
+        "step": 5,
+        "frame_rank": 2,
+        "offset_rank": 2
+      },
+      {
+        "scenario": "danger",
+        "clip_id": "danger-0001",
+        "step": 0,
+        "frame_rank": 0,
+        "offset_rank": 0
+      },
+      {
+        "scenario": "danger",
+        "clip_id": "danger-0001",
+        "step": 2,
+        "frame_rank": 0,
+        "offset_rank": 1
+      },
+      {
+        "scenario": "danger",
+        "clip_id": "danger-0001",
+        "step": 5,
+        "frame_rank": 0,
+        "offset_rank": 2
+      },
+      {
+        "scenario": "danger",
+        "clip_id": "danger-0002",
+        "step": 0,
+        "frame_rank": 1,
+        "offset_rank": 0
+      },
+      {
+        "scenario": "danger",
+        "clip_id": "danger-0002",
+        "step": 2,
+        "frame_rank": 1,
+        "offset_rank": 1
+      },
+      {
+        "scenario": "danger",
+        "clip_id": "danger-0002",
+        "step": 5,
+        "frame_rank": 1,
+        "offset_rank": 2
+      },
+      {
+        "scenario": "danger",
+        "clip_id": "danger-0003",
+        "step": 0,
+        "frame_rank": 2,
+        "offset_rank": 0
+      },
+      {
+        "scenario": "danger",
+        "clip_id": "danger-0003",
+        "step": 2,
+        "frame_rank": 2,
+        "offset_rank": 1
+      },
+      {
+        "scenario": "danger",
+        "clip_id": "danger-0003",
+        "step": 5,
+        "frame_rank": 2,
+        "offset_rank": 2
+      },
+      {
+        "scenario": "goal",
+        "clip_id": "goal-0001",
+        "step": 0,
+        "frame_rank": 0,
+        "offset_rank": 0
+      },
+      {
+        "scenario": "goal",
+        "clip_id": "goal-0001",
+        "step": 2,
+        "frame_rank": 0,
+        "offset_rank": 1
+      },
+      {
+        "scenario": "goal",
+        "clip_id": "goal-0001",
+        "step": 5,
+        "frame_rank": 0,
+        "offset_rank": 2
+      },
+      {
+        "scenario": "goal",
+        "clip_id": "goal-0002",
+        "step": 0,
+        "frame_rank": 1,
+        "offset_rank": 0
+      },
+      {
+        "scenario": "goal",
+        "clip_id": "goal-0002",
+        "step": 2,
+        "frame_rank": 1,
+        "offset_rank": 1
+      },
+      {
+        "scenario": "goal",
+        "clip_id": "goal-0002",
+        "step": 5,
+        "frame_rank": 1,
+        "offset_rank": 2
+      },
+      {
+        "scenario": "goal",
+        "clip_id": "goal-0003",
+        "step": 0,
+        "frame_rank": 2,
+        "offset_rank": 0
+      },
+      {
+        "scenario": "goal",
+        "clip_id": "goal-0003",
+        "step": 2,
+        "frame_rank": 2,
+        "offset_rank": 1
+      },
+      {
+        "scenario": "goal",
+        "clip_id": "goal-0003",
+        "step": 5,
+        "frame_rank": 2,
+        "offset_rank": 2
+      }
+    ],
+    "row_counts": {
+      "summaries": 1143,
+      "cross_checkpoint": 342,
+      "frame_pairs": 20520,
+      "embeddings": 756
+    },
+    "nan_counts": {
+      "summaries_estimate": 0,
+      "cross_checkpoint_estimate": 0,
+      "frame_pairs_value": 0
+    },
+    "estimate_outside_interval": {
+      "summaries": 4,
+      "cross_checkpoint": 10
+    },
+    "notes": []
+  }
+}

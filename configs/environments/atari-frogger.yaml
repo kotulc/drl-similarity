@@ -1,0 +1,33 @@
+schema_version: 1
+kind: environment
+id: atari-frogger-v1
+
+backend: gymnasium
+registration_modules:
+  - ale_py
+env_id: ALE/Frogger-v5
+make_kwargs:
+  obs_type: rgb
+  frameskip: 1
+  repeat_action_probability: 0.0
+  full_action_space: false
+
+wrappers:
+  - id: record_episode_statistics
+    kwargs: {}
+  - id: sb3_atari
+    kwargs:
+      noop_max: 30
+      frame_skip: 4
+      screen_size: 84
+      terminal_on_life_loss: false
+      clip_reward: false
+  - id: frame_stack
+    kwargs:
+      num_stack: 4
+
+expected:
+  observation_shape: [4, 84, 84]
+  observation_dtype: uint8
+  action_space: discrete
+  effective_frame_skip: 4

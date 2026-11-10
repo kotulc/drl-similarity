@@ -1,0 +1,105 @@
+[project]
+name = "drl-similarity"
+version = "0.1.0"
+description = "YAML-driven framework for studying DRL representation similarity across capability checkpoints."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Clay" }]
+dependencies = [
+  "gymnasium[atari]>=0.29.1,<1.1",
+  "ale-py>=0.9.0,<0.11",
+  "torch>=2.2.0,<2.6",
+  "stable-baselines3>=2.3.0,<2.5",
+  "numpy>=1.26.0,<2.2",
+  "pandas>=2.2.0,<2.3",
+  "pyarrow>=15.0.0,<19",
+  "scipy>=1.12.0,<1.15",
+  "scikit-learn>=1.4.0,<1.6",
+  "pydantic>=2.6.0,<2.11",
+  "pyyaml>=6.0.1,<7",
+  "rsatoolbox>=0.1.5,<0.3",
+  "plotly>=5.20.0,<6",
+  "kaleido>=1.0.0,<2",
+  "streamlit>=1.32.0,<1.42",
+  "typer>=0.12.0,<0.16",
+  "pillow>=10.2.0,<12",
+  "imageio>=2.34.0,<2.37",
+  "imageio-ffmpeg>=0.5.1,<0.6",
+  "opencv-python-headless>=4.9.0,<5",
+  "rich>=13.7.0,<14",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.1.0,<9",
+  "pytest-cov>=5.0.0,<6",
+  "ruff>=0.4.0,<0.9",
+  "mypy>=1.9.0,<1.15",
+  "types-PyYAML>=6.0.12,<7",
+  "types-Pillow>=10.2.0,<12",
+]
+umap = [
+  "umap-learn>=0.5.6,<0.6",
+]
+
+[project.scripts]
+drl-sim = "drl_similarity.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/drl_similarity"]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.1.0,<9",
+  "pytest-cov>=5.0.0,<6",
+  "ruff>=0.4.0,<0.9",
+  "mypy>=1.9.0,<1.15",
+  "types-PyYAML>=6.0.12,<7",
+  "types-Pillow>=10.2.0,<12",
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = [
+  "atari: requires Atari ROM support via ale-py",
+  "slow: longer integration tests",
+  "gpu: requires CUDA",
+]
+filterwarnings = [
+  "ignore::DeprecationWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+# 100 columns is a soft limit; Typer options are declared as argument defaults
+ignore = ["E501", "B008"]
+
+[tool.ruff.lint.per-file-ignores]
+# The bootstrap statistic closure is called inside the same loop iteration
+"src/drl_similarity/analysis.py" = ["B023"]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["drl_similarity"]
+mypy_path = "src"
+warn_unused_configs = true
+disallow_untyped_defs = true

@@ -218,3 +218,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Project artifacts / local runs (anchored: src/drl_similarity/artifacts/ is source)
+/runs/
+/artifacts/
+/data/scenarios/*/
+*.npz
+*.parquet
+!tests/fixtures/**/*.npz
+!tests/fixtures/**/*.parquet
