@@ -170,25 +170,27 @@ flags such as `--resume` or `--force`. Scientific choices live in versioned
 configuration:
 
 ```bash
-# Install the project and Atari dependencies.
-uv sync
+# Install the project and Atari dependencies (Python 3.11).
+python -m venv .venv
+.venv/Scripts/activate            # Linux/macOS: source .venv/bin/activate
+pip install -e ".[dev]"
 
 # Train one agent, evaluate regularly, and save checkpoints.
-uv run drl-sim train --config configs/experiments/frogger-dqn.yaml
+drl-sim train --config configs/experiments/frogger-dqn.yaml
 
 # Select weak/medium/strong checkpoints from held-out evaluation results.
-uv run drl-sim select-checkpoints --config configs/experiments/frogger-dqn.yaml
+drl-sim select-checkpoints --config configs/experiments/frogger-dqn.yaml
 
 # Collect candidate clips, then curate labels in the generated manifest.
-uv run drl-sim collect-scenarios --config configs/studies/frogger-v1.yaml
-uv run drl-sim validate-scenarios --config configs/studies/frogger-v1.yaml
+drl-sim collect-scenarios --config configs/studies/frogger-v1.yaml
+drl-sim validate-scenarios --config configs/studies/frogger-v1.yaml
 
 # Extract activations and compute analysis artifacts.
-uv run drl-sim extract --config configs/studies/frogger-v1.yaml
-uv run drl-sim analyze --config configs/studies/frogger-v1.yaml
+drl-sim extract --config configs/studies/frogger-v1.yaml
+drl-sim analyze --config configs/studies/frogger-v1.yaml
 
 # Explore performance, clips, representations, and uncertainty.
-uv run drl-sim dashboard --config configs/studies/frogger-v1.yaml
+drl-sim dashboard --config configs/studies/frogger-v1.yaml
 ```
 
 Each command writes immutable, configuration-addressed artifacts. Expensive
@@ -250,7 +252,8 @@ for package choices and component-level details.
 
 ## Proposed stack
 
-- Python 3.11 and `uv` for a reproducible environment.
+- Python 3.11 with a standard `venv` and `pip`; `requirements-lock.txt` pins
+  exact versions for reproduction.
 - **Gymnasium**, the maintained successor to Gym, and ALE via
   `gymnasium[atari]` for `ALE/Frogger-v5`. Legacy `gym` is not used.
 - Stable-Baselines3 and PyTorch for DQN training and activation hooks.

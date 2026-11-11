@@ -1,36 +1,273 @@
 # User guide
 
-How to run a study, what every YAML option means, and how to extend each
-component. Design rationale lives in the [implementation plan](implementation-plan.md);
-module internals in [modules.md](modules.md).
+This framework trains a reinforcement-learning agent on Atari Frogger, then asks
+how its internal representations differ between situations (a calm start, an
+imminent death, reaching a goal) and between a weak, medium, and strong version
+of the same agent. Everything is driven by YAML files; each command reads one
+YAML file and writes files to disk that the next command uses.
+
+- Sections 0-2: what the pieces are, installing, and a full walkthrough.
+- Sections 3-8: reference (commands, every YAML option, extending, outputs, troubleshooting).
+- Design rationale: [implementation plan](implementation-plan.md). Code: [modules.md](modules.md).
+
+## 0. How it fits together
+
+| Term | Meaning | Lives in |
+|---|---|---|
+| **Experiment** | one training run: environment + algorithm + seed + budget | `configs/experiments/*.yaml` → `runs/<id>/` |
+| **Checkpoint** | saved model weights at a training step | `runs/<id>/checkpoints/` |
+| **Weak / medium / strong** | three checkpoints picked by evaluation score, not by step | `runs/<id>/selected-checkpoints.yaml` |
+| **Scenario clip** | a short, fixed sequence of game frames labelled `baseline`, `danger`, or `goal` | `data/scenarios/<name>.yaml` + `data/scenarios/<name>/` |
+| **Study** | which runs and clips to compare, which layers to read, which metrics to compute | `configs/studies/*.yaml` → `artifacts/<id>/` |
+| **Activations** | each checkpoint's internal layer outputs for every clip frame | `artifacts/<id>/activations/` |
+| **Metrics** | similarity numbers (with confidence intervals) computed from activations | `artifacts/<id>/metrics/` |
+
+The pipeline runs in this order; each stage refuses to start until the previous one's files exist and verify:
+
+```text
+train → select-checkpoints → evaluate → collect-scenarios → (you review clips) → run-study → dashboard
+└──────────── experiment YAML ────────┘ └──────────────────── study YAML ──────────────────────────┘
+```
+
+Two configurations ship ready to use:
+
+| Config pair | Purpose | Training | Clips per label |
+|---|---|---|---|
+| `frogger-dqn-demo.yaml` + `frogger-demo.yaml` | learn the workflow on a CPU | 120k steps (~15 min CPU) | 8 |
+| `frogger-dqn.yaml` + `frogger-v1.yaml` | the actual study | 10M steps (GPU, many hours) | 20 |
 
 ## 1. Install and check
 
-```bash
-uv sync                                                          # Python 3.11, locked deps
-uv run drl-sim doctor --config configs/experiments/frogger-dqn-demo.yaml
+Requires Python 3.11 (the pinned torch/numpy versions have no 3.13 builds).
+If `py -3.11 --version` fails, install 3.11 from python.org; it can sit beside
+other versions. Run everything from the repository root.
+
+The `.venv` already in this checkout works; recreate it only if it is missing or broken.
+
+**Create the environment and install** (once):
+
+```powershell
+# PowerShell
+py -3.11 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
 ```
 
-`doctor` checks packages, registries, CUDA, and (for environment/experiment
-configs) builds the environment and takes one step.
-
-## 2. Run the demo end to end (CPU, ~20 minutes)
-
 ```bash
-E=configs/experiments/frogger-dqn-demo.yaml
-S=configs/studies/frogger-demo.yaml
-
-uv run drl-sim train --config $E                 # 120k steps, checkpoint + eval every 10k
-uv run drl-sim select-checkpoints --config $E    # weak / medium / strong
-uv run drl-sim evaluate --config $E              # final suite on the selected checkpoints
-uv run drl-sim collect-scenarios --config $S     # candidate clips + manifest template
-uv run python scripts/approve_demo_clips.py --config $S   # DEMO ONLY: skips human review
-uv run drl-sim run-study --config $S             # validate, extract, analyze (idempotent)
-uv run drl-sim dashboard --config $S             # prints a local URL
+# bash (Linux/macOS: replace Scripts with bin)
+python3.11 -m venv .venv
+.venv/Scripts/python -m pip install -e ".[dev]"
 ```
 
-For the real study use `frogger-dqn.yaml` / `frogger-v1.yaml` and replace the
-approval script with manual review (section 4).
+**Activate it** in every new terminal so `drl-sim` and `python` refer to the project:
+
+| Shell | Command |
+|---|---|
+| PowerShell | `.\.venv\Scripts\Activate.ps1` |
+| cmd | `.venv\Scripts\activate.bat` |
+| bash (Windows) | `source .venv/Scripts/activate` |
+| bash (Linux/macOS) | `source .venv/bin/activate` |
+
+PowerShell blocks `Activate.ps1` by default ("running scripts is disabled").
+Either allow local scripts once with
+`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, or skip activation and
+call the tools by path: `.\.venv\Scripts\drl-sim.exe ...`.
+
+**Check the install**:
+
+```text
+drl-sim doctor --config configs/experiments/frogger-dqn-demo.yaml
+```
+
+This checks packages, the registries, CUDA, and builds the Frogger environment
+and takes one step. Expect `doctor: 18/18 checks passed`.
+
+Install options:
+
+- Exact versions used for the demo: `pip install -r requirements-lock.txt`, then `pip install -e . --no-deps` (frozen on Windows with CPU PyTorch).
+- GPU: install the CUDA build of torch from pytorch.org first, then `pip install -e ".[dev]"`.
+- UMAP embeddings: `pip install -e ".[dev,umap]"`.
+
+## 2. Walkthrough
+
+After activation, every `drl-sim` line below runs unchanged in PowerShell,
+cmd, and bash (forward slashes work everywhere). Only copying and opening files
+differ by shell; both versions are given.
+
+### 2a. Look at the existing demo results (2 minutes)
+
+This checkout already contains a finished demo run, so you can see the end
+result before producing your own.
+
+```text
+drl-sim dashboard --config configs/studies/frogger-demo.yaml
+```
+
+- **What it does:** checks the demo's artifacts, then starts a local web server. It never trains or computes anything.
+- **Output:** a line like `Local URL: http://localhost:8501`. Open it in a browser. Stop the server with `Ctrl+C`.
+- **What to look at:**
+  - **Similarity matrix** (the start page): each cell compares two scenario types; click **Open** on a cell to see individual frame pairs below it, and **Inspect** on a frame pair to show it in the side panel.
+  - **Scenario explorer:** the actual clips behind each label.
+  - **Training and quality:** the learning curve and where weak, medium, and strong were taken.
+
+### 2b. Create your own experiment and study
+
+Running `train` on the demo config again fails with `Run directory already exists`:
+run directories are never overwritten. Make your own copies with new IDs instead.
+
+```powershell
+# PowerShell
+Copy-Item configs/experiments/frogger-dqn-demo.yaml configs/experiments/my-frogger.yaml
+Copy-Item configs/studies/frogger-demo.yaml configs/studies/my-study.yaml
+code configs/experiments/my-frogger.yaml configs/studies/my-study.yaml   # or any editor
+```
+
+```bash
+# bash
+cp configs/experiments/frogger-dqn-demo.yaml configs/experiments/my-frogger.yaml
+cp configs/studies/frogger-demo.yaml configs/studies/my-study.yaml
+```
+
+Edit these lines (the IDs name the output folders, so they must be new):
+
+| File | Line | Change to |
+|---|---|---|
+| `my-frogger.yaml` | `id: frogger-dqn-demo` | `id: my-frogger` |
+| `my-study.yaml` | `id: frogger-demo-v1` | `id: my-study-v1` |
+| `my-study.yaml` | `run_dir: ../../runs/frogger-dqn-demo` | `run_dir: ../../runs/my-frogger` |
+| `my-study.yaml` | `manifest: ../../data/scenarios/frogger-demo.yaml` | `manifest: ../../data/scenarios/my-study.yaml` |
+
+Check both files before running anything:
+
+```text
+drl-sim validate-config --config configs/experiments/my-frogger.yaml
+drl-sim validate-config --config configs/studies/my-study.yaml
+```
+
+Expect `ok: configuration is valid`. A typo or unknown field fails here with the field name, not hours into training.
+Paths inside a YAML file are relative to that file, which is why they start with `../../`.
+
+### 2c. Train
+
+```text
+drl-sim train --config configs/experiments/my-frogger.yaml
+```
+
+- **What it does:** trains a DQN agent for `training.total_timesteps` (120,000 here). Every `evaluation.selection.interval_steps` (10,000) it saves a checkpoint and plays a few evaluation games.
+- **Takes:** about 15 minutes on a CPU.
+- **Output:** one line per checkpoint, e.g. `checkpoint checkpoint_40000 mean selection return 14.00`. Return is points scored; it should generally rise.
+- **Produces:** `runs/my-frogger/`: checkpoints, `evaluations.parquet` (every evaluation game), the resolved config, version and fingerprint records.
+- **If interrupted:** resume from the last checkpoint: `drl-sim train --config configs/experiments/my-frogger.yaml --resume runs/my-frogger/checkpoints/checkpoint_60000.zip`.
+- Add `--dry-run` to any command to check it without writing anything.
+
+### 2d. Pick weak, medium, and strong checkpoints
+
+```text
+drl-sim select-checkpoints --config configs/experiments/my-frogger.yaml
+```
+
+- **What it does:** applies the rules in `checkpoint_selection`: weak = first evaluated checkpoint after learning starts; strong = highest mean return; medium = the checkpoint between them closest to the midpoint score.
+- **Produces:** `runs/my-frogger/selected-checkpoints.yaml` with each choice's step, score, and the evidence.
+- **If it fails** with `Insufficient learning`: strong did not beat weak by `minimum_strong_improvement`. Train longer or lower that threshold; the framework will not compare checkpoints that are not meaningfully different.
+
+### 2e. Measure the chosen checkpoints on fresh games
+
+```text
+drl-sim evaluate --config configs/experiments/my-frogger.yaml
+```
+
+- **What it does:** plays the `evaluation.final.seeds` games (never used for selection) with each of the three chosen checkpoints, so their scores are not inflated by having been selected.
+- **Produces:** rows with `suite = final` in `runs/my-frogger/evaluations.parquet`; shown on the dashboard's Training page.
+
+### 2f. Collect candidate clips
+
+```text
+drl-sim collect-scenarios --config configs/studies/my-study.yaml
+```
+
+- **What it does:** plays games with the strong checkpoint and cuts a fixed-length window (`clip_steps`, 16 here) around each event: a new life starting (`baseline`), a life being lost (`danger`), a point being scored (`goal`). See `scenarios.collection.candidate_windows`.
+- **Takes:** about 10 seconds for the demo settings.
+- **Output:** e.g. `wrote 72 candidate clip(s) and manifest template`. A warning appears if a label has fewer candidates than required.
+- **Produces:**
+  - `data/scenarios/my-study.yaml`: the manifest, one entry per clip, all `review_status: pending`.
+  - `data/scenarios/my-study/observations.npz`: the frozen frames every checkpoint will see.
+  - `data/scenarios/my-study/candidates/contact_sheets/*.png`: one image per clip for review.
+
+### 2g. Review the clips (the one manual step)
+
+The labels are only as good as this review, and it must be done before looking at any results.
+
+1. Open the contact sheets. Each PNG shows the clip's frames left to right, top to bottom.
+   - PowerShell: `ii data/scenarios/my-study/candidates/contact_sheets`
+   - bash: `explorer.exe data/scenarios/my-study/candidates/contact_sheets` (Linux: `xdg-open`)
+2. Open `data/scenarios/my-study.yaml`. For each clip, compare its sheet with its `scenario` label and edit two fields:
+
+   ```yaml
+   - clip_id: danger-0003
+     scenario: danger
+     ...
+     review_status: approved   # was: pending. Use rejected for wrong or ambiguous clips
+     curator: clay             # was: null. Your name; several reviewers: "clay, sam"
+   ```
+
+3. Keep the labels balanced: approve the same number per label (at least `minimum_clips_per_label`, 8 here), and reject the rest.
+4. Check your work:
+
+   ```text
+   drl-sim validate-scenarios --config configs/studies/my-study.yaml
+   ```
+
+   It lists every problem at once, e.g.:
+
+   ```text
+   error: Scenario validation failed with 3 issue(s):
+     - 72 clip(s) still pending review; set review_status to approved or rejected: ...
+     - fewer than 8 usable clips for label(s): {'baseline': 0, 'danger': 0, 'goal': 0}
+   ```
+
+   Repeat until it prints `ok: scenarios valid`.
+
+**Practice-only shortcut:** `python scripts/approve_demo_clips.py --config configs/studies/my-study.yaml`
+approves the first non-overlapping clips per label without looking at them and
+marks the curator as `demo-auto-approved`. Never use it for real results.
+
+### 2h. Extract activations and compute metrics
+
+```text
+drl-sim run-study --config configs/studies/my-study.yaml
+```
+
+- **What it does:** verifies the run and the reviewed clips, feeds every clip frame through the weak, medium, and strong checkpoints, records the configured layers (`extraction.layers`), then computes every metric in `analysis.metrics` with bootstrap confidence intervals.
+- **Takes:** about 1 minute for the demo.
+- **Output:** one line per stage:
+
+  ```text
+  [skipped] experiment[0]: verified run ...runs\my-frogger
+  [skipped] scenarios: valid ...data\scenarios\my-study.yaml
+  [executed] extract: ...artifacts\my-study-v1\activations
+  [executed] analyze: ...artifacts\my-study-v1\metrics
+  ok: study ready. Next: drl-sim dashboard --config configs/studies/my-study.yaml
+  ```
+
+  `[blocked]` names the missing step and the command to run. Running it again skips finished stages; after editing the study YAML it recomputes only what the edit affects.
+- **Produces:** `artifacts/my-study-v1/`. `extract` and `analyze` can also be run individually.
+
+### 2i. Explore the results
+
+```text
+drl-sim dashboard --config configs/studies/my-study.yaml
+```
+
+Same as 2a, now showing your study. The yellow banner (one training seed) and
+orange "valid with warnings" badge are expected for a single run.
+
+### 2j. Moving to the real study
+
+The real configs are `frogger-dqn.yaml` and `frogger-v1.yaml`; the steps are identical. Differences:
+
+- **Training:** 10M steps. Use a GPU (`device: auto` picks it up) and expect hours; `--resume` makes interruptions cheap.
+- **Clips:** 20 per label, 32 steps each, reviewed by hand.
+- **Clip variety:** a deterministic agent in a deterministic game repeats itself, and identical clips are skipped (`duplicate_observations` in `candidates/candidates.json`). Add collection seeds if a label is short.
+- **Changing settings:** edit the YAML (section 5), never pass settings on the command line. A changed experiment needs a new `id`; a changed study re-runs with `run-study`.
 
 ## 3. Commands
 
@@ -54,6 +291,8 @@ approval script with manual review (section 4).
 - A run directory is immutable: re-running `train` fails unless `--resume` points at one of its checkpoints with an unchanged config.
 
 ## 4. Curating scenarios
+
+Checklist for the review walked through in 2g.
 
 1. `collect-scenarios` writes every candidate as `review_status: pending`.
 2. Inspect `data/scenarios/<name>/candidates/contact_sheets/*.png` (and `previews/*.mp4`).

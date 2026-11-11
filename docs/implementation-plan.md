@@ -10,7 +10,7 @@ dashboard loads.
 
 The MVP is complete when a fresh checkout can:
 
-1. Install on Python 3.11 with one documented `uv sync`.
+1. Install on Python 3.11 with one documented `pip install -e ".[dev]"`.
 2. train either built-in CNN DQN or CNN PPO from YAML on the pinned Frogger
    environment while saving evaluation results and resumable checkpoints;
 3. select weak, medium, and strong checkpoints from held-out evaluation return;
@@ -1327,7 +1327,7 @@ for the current group pass.
 - Optional dependency groups: `dev` for pytest/ruff/mypy and `umap` for
   umap-learn.
 - Configure Ruff, mypy, and pytest. Pin compatible major/minor ranges and commit
-  `uv.lock`.
+  `requirements-lock.txt` (`pip freeze` of a verified environment).
 
 `src/drl_similarity/errors.py`
 

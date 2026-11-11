@@ -13,7 +13,7 @@ generator refuses to touch a directory that lacks its marker.
 
 Usage::
 
-    uv run python scripts/generate_fixture_study.py
+    python scripts/generate_fixture_study.py
 """
 
 from __future__ import annotations

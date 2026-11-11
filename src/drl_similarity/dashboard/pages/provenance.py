@@ -119,7 +119,7 @@ def render(data: DashboardData) -> None:
     )
     if study.synthetic:
         st.info(
-            "This study was produced by `uv run python scripts/generate_fixture_study.py`. It has no trained "
+            "This study was produced by `python scripts/generate_fixture_study.py`. It has no trained "
             "checkpoints, so `train`, `collect-scenarios`, and `extract` would replace it with real data.",
             icon="🧪",
         )

@@ -6,7 +6,7 @@ label, rejects the rest, and re-splits the approved clips.
 
 Usage::
 
-    uv run python scripts/approve_demo_clips.py --config configs/studies/frogger-demo.yaml
+    python scripts/approve_demo_clips.py --config configs/studies/frogger-demo.yaml
 """
 
 from __future__ import annotations

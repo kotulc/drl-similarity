@@ -21,7 +21,7 @@ FIXTURE_CONFIG = Path(__file__).resolve().parents[1] / "fixtures" / "study" / "s
 
 pytestmark = pytest.mark.skipif(
     not FIXTURE_CONFIG.exists(),
-    reason="fixture study missing; run: uv run python scripts/generate_fixture_study.py --target fixture",
+    reason="fixture study missing; run: python scripts/generate_fixture_study.py",
 )
 
 
